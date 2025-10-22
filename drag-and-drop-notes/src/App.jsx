@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 import Notes from "./components/Notes";
+import NewNote from "./components/newNote";
 
 function App() {
   const [notes, setNotes] = useState([
@@ -21,6 +22,7 @@ function App() {
 
   return (
     <>
+      <NewNote notes={notes} setNotes={setNotes} />
       <Notes notes={notes} setNotes={setNotes} />
     </>
   );

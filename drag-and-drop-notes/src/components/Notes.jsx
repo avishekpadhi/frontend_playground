@@ -2,6 +2,7 @@ import React, { createRef, useEffect, useRef } from "react";
 import Note from "./Note";
 
 const Notes = ({ notes = [], setNotes = () => {} }) => {
+  const noteRefs = useRef([]);
   const determineNewPosition = () => {
     const maxX = window.innerWidth - 250;
     const maxY = window.innerHeight - 250;
@@ -20,7 +21,7 @@ const Notes = ({ notes = [], setNotes = () => {} }) => {
     const offsetX = e.clientX - rect.left;
     const offsetY = e.clientY - rect.top;
 
-    const startPos = note;
+    const startPos = note.position;
 
     const handleMouseUp = (e) => {
       document.removeEventListener("mouseup", handleMouseUp);
@@ -29,7 +30,9 @@ const Notes = ({ notes = [], setNotes = () => {} }) => {
       const finalRect = noteRef.getBoundingClientRect();
       const newPostion = { x: finalRect.left, y: finalRect.top };
 
-      if (false) {
+      if (checkForOverlap(id)) {
+        noteRef.style.left = `${startPos.x}px`;
+        noteRef.style.top = `${startPos.y}px`;
       } else {
         updateNodePosition(id, newPostion);
       }
@@ -55,6 +58,35 @@ const Notes = ({ notes = [], setNotes = () => {} }) => {
     document.addEventListener("mousemove", handleMouseMove);
   };
 
+  const checkForOverlap = (id) => {
+    const currentNoteRef = noteRefs.current[id].current;
+    const currentRect = currentNoteRef.getBoundingClientRect();
+
+    return notes.some((n) => {
+      if (n.id === id) return false;
+
+      const otherNodeRef = noteRefs.current[n.id].current;
+      const otherRect = otherNodeRef.getBoundingClientRect();
+
+      const overlap = !(
+        currentRect.right < otherRect.left ||
+        currentRect.left > otherRect.right ||
+        currentRect.bottom < otherRect.top ||
+        currentRect.top > otherRect.bottom
+      );
+
+      return overlap;
+    });
+  };
+
+  const updateNotePosition = (id, newPosition) => {
+    const updatedNotes = notes.map((note) =>
+      note.id === id ? { ...note, position: newPosition } : note
+    );
+    setNotes(updatedNotes);
+    localStorage.setItem("notes", JSON.stringify(updatedNotes));
+  };
+
   useEffect(() => {
     const savedNotes = JSON.parse(localStorage.getItem("notes")) || [];
     const updatedNotes = notes.map((note) => {
@@ -72,7 +104,6 @@ const Notes = ({ notes = [], setNotes = () => {} }) => {
     localStorage.setItem("notes", JSON.stringify(updatedNotes));
   }, []);
 
-  const noteRefs = useRef([]);
   return (
     <>
       {notes.map((note) => {
